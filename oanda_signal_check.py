@@ -1,31 +1,31 @@
 import os
 import requests
 
-INSTRUMENT = os.environ.get("INSTRUMENT", "EUR_USD")
-GRANULARITY = os.environ.get("GRANULARITY", "M15")
-ENVIRONMENT = os.environ.get("OANDA_ENV", "practice")  # practice / live
-CANDLE_COUNT = 200
+SYMBOL = os.environ.get("SYMBOL", "EUR/USD")
+INTERVAL = os.environ.get("INTERVAL", "15min")
 STATE_FILE = "last_signal.txt"
 
-OANDA_API_TOKEN = os.environ["OANDA_API_TOKEN"]
-OANDA_ACCOUNT_ID = os.environ.get("OANDA_ACCOUNT_ID", "")
+TWELVEDATA_API_KEY = os.environ["TWELVEDATA_API_KEY"]
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-BASE_URLS = {
-    "practice": "https://api-fxpractice.oanda.com",
-    "live": "https://api-fxtrade.oanda.com",
-}
 
-
-def fetch_candles(instrument, granularity, count):
-    url = f"{BASE_URLS[ENVIRONMENT]}/v3/instruments/{instrument}/candles"
-    headers = {"Authorization": f"Bearer {OANDA_API_TOKEN}"}
-    params = {"count": count, "granularity": granularity, "price": "M"}
-    resp = requests.get(url, headers=headers, params=params, timeout=20)
+def fetch_closes(symbol, interval, outputsize=200):
+    url = "https://api.twelvedata.com/time_series"
+    params = {
+        "symbol": symbol,
+        "interval": interval,
+        "outputsize": outputsize,
+        "apikey": TWELVEDATA_API_KEY,
+    }
+    resp = requests.get(url, params=params, timeout=20)
     resp.raise_for_status()
-    candles = resp.json()["candles"]
-    return [float(c["mid"]["c"]) for c in candles if c["complete"]]
+    data = resp.json()
+    if data.get("status") == "error":
+        raise RuntimeError(f"Twelve Data алдаа: {data.get('message')}")
+    values = data["values"]
+    closes = [float(v["close"]) for v in reversed(values)]
+    return closes
 
 
 def sma(values, period):
@@ -129,7 +129,7 @@ def write_last_signal(signal):
 
 
 def main():
-    closes = fetch_candles(INSTRUMENT, GRANULARITY, CANDLE_COUNT)
+    closes = fetch_closes(SYMBOL, INTERVAL)
     if len(closes) < 55:
         print("Дата хүрэлцэхгүй байна.")
         return
@@ -137,11 +137,11 @@ def main():
     signal, score, close, r, hist = build_signal(closes)
     last = read_last_signal()
 
-    print(f"{INSTRUMENT} close={close:.5f} RSI={r:.1f} score={score:+d} -> {signal} (prev={last or '—'})")
+    print(f"{SYMBOL} close={close:.5f} RSI={r:.1f} score={score:+d} -> {signal} (prev={last or '—'})")
 
     if signal != "HOLD" and signal != last:
         msg = (
-            f"📊 {INSTRUMENT} ({GRANULARITY})\n"
+            f"📊 {SYMBOL} ({INTERVAL})\n"
             f"Дохио: {signal}\n"
             f"Үнэ: {close:.5f}\n"
             f"RSI: {r:.1f}  MACD hist: {hist:.5f}\n"
