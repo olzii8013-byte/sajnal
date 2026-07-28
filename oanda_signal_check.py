@@ -130,7 +130,7 @@ def write_last_signal(signal):
 
 def main():
     closes = fetch_closes(SYMBOL, INTERVAL)
-        send_telegram("Test message ажиллаж байна")
+    send_telegram("Test message ажиллаж байна")
 
     if len(closes) < 55:
         print("Дата хүрэлцэхгүй байна.")
