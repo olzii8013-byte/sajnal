@@ -1,13 +1,18 @@
 import os
 import requests
 
+
+def _clean(s):
+    return "".join(s.split())
+
+
 SYMBOL = os.environ.get("SYMBOL", "EUR/USD")
 INTERVAL = os.environ.get("INTERVAL", "15min")
 STATE_FILE = "last_signal.txt"
 
-TWELVEDATA_API_KEY = os.environ["TWELVEDATA_API_KEY"]
-TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
+TWELVEDATA_API_KEY = _clean(os.environ["TWELVEDATA_API_KEY"])
+TELEGRAM_BOT_TOKEN = _clean(os.environ["TELEGRAM_BOT_TOKEN"])
+TELEGRAM_CHAT_ID = _clean(os.environ["TELEGRAM_CHAT_ID"])
 
 
 def fetch_closes(symbol, interval, outputsize=200):
