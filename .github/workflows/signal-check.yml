@@ -1,4 +1,4 @@
-name: OANDA Forex Signal Check
+name: Forex Signal Check
 
 on:
   schedule:
@@ -22,13 +22,11 @@ jobs:
 
       - name: Run signal check
         env:
-          OANDA_API_TOKEN: ${{ secrets.OANDA_API_TOKEN }}
-          OANDA_ACCOUNT_ID: ${{ secrets.OANDA_ACCOUNT_ID }}
-          OANDA_ENV: ${{ secrets.OANDA_ENV }}
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          INSTRUMENT: "EUR_USD"
-          GRANULARITY: "M15"
+          SYMBOL: "EUR/USD"
+          INTERVAL: "15min"
         run: python oanda_signal_check.py
 
       - name: Commit updated signal state (if changed)
